@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Storm Trooper Feedback Form</title>
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'nonce-ABC123'; style-src 'self';">
+  <link rel="stylesheet" href="styles.css">
+
+  <style>
+    /* Constrain the form width */
+    form {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #fff;
+      border-radius: 4px;
+      background-color: #1F1F1F;
+    }
+
+    /* Camera container with fixed width/height */
+    .camera-container {
+      width: 400px;
+      height: 300px;
+      margin: 0 auto 15px; /* center + spacing below */
+      background: #000;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #ccc;
+    }
+
+    /* Fill the container exactly */
+    #video,
+    #capturedImage {
+      display: none;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    /* Show the video feed initially */
+    #video {
+      display: block;
+    }
+
+    label {
+      color: #fff;
+    }
+    input, textarea, button {
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      box-sizing: border-box;
+      border-radius: 3px;
+      border: 1px solid #999;
+    }
+    button {
+      background-color: #fff;
+      color: #000;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <img src="images/stormtrooperhelemet.png" alt="Storm Trooper Helmet" style="display: block; margin:0 auto;">
+  <h1 style="text-align:center; color:#fff;">Storm Trooper Feedback Form</h1>
+
+  <form id="feedbackForm" method="POST" action="#" autocomplete="off">
+    <label for="name">Name:</label>
+    <input
+      id="name"
+      name="name"
+      type="text"
+      placeholder="Enter your full name"
+      required
+      pattern="[A-Za-z\s]+"
+      title="Name should only contain letters and spaces."
+      maxlength="50"
+    >
+
+    <label for="age">Age:</label>
+    <input
+      id="age"
+      name="age"
+      type="number"
+      placeholder="Enter your age"
+      required
+      min="1"
+      max="150"
+      title="Please enter a valid age between 1 and 150."
+    >
+
+    <label for="phone">Phone:</label>
+    <input
+      id="phone"
+      name="phone"
+      type="tel"
+      placeholder="Enter your phone number"
+      pattern="^[0-9\-\+\s\(\)]{7,15}$"
+      required
+      title="Please enter a valid phone number (7-15 digits)."
+      maxlength="15"
+    >
+
+    <label for="street">Street:</label>
+    <input
+      id="street"
+      name="street"
+      type="text"
+      placeholder="Enter your street"
+      required
+      maxlength="100"
+    >
+
+    <label for="city">City:</label>
+    <input
+      id="city"
+      name="city"
+      type="text"
+      placeholder="Enter your city name"
+      required
+      maxlength="50"
+    >
+
+    <label for="state">State:</label>
+    <input
+      id="state"
+      name="state"
+      type="text"
+      placeholder="Enter your state name"
+      required
+      maxlength="50"
+    >
+
+    <label for="zip">Zip Code:</label>
+    <input
+      id="zip"
+      name="zip"
+      type="text"
+      placeholder="Enter your zip code"
+      required
+      pattern="^\d{4,10}$"
+      title="Please enter a valid zip code (4-10 digits)."
+      maxlength="10"
+    >
+
+    <label for="email">Email:</label>
+    <input
+      id="email"
+      name="email"
+      type="email"
+      placeholder="Enter your Email"
+      required
+      maxlength="100"
+    >
+
+    <label for="photoData">Take a Picture:</label>
+    <div class="camera-container">
+      <video id="video" autoplay></video>
+      <img id="capturedImage" alt="Captured snapshot">
+    </div>
+    <button type="button" id="captureBtn">Capture Photo</button>
+    <input
+      id="photoData"
+      name="photoData"
+      type="text"
+      style="display: none;"
+      required
+      readonly
+    >
+
+    <label for="message">Feedback Message:</label>
+    <textarea
+      id="message"
+      name="message"
+      placeholder="Enter your feedback"
+      required
+      maxlength="500"
+    ></textarea>
+
+    <button type="submit" id="submitBtn">Submit</button>
+  </form>
+
+  <script nonce="ABC123">
+    let stream;
+    const video = document.getElementById('video');
+    const capturedImage = document.getElementById('capturedImage');
+    const captureBtn = document.getElementById('captureBtn');
+    const photoData = document.getElementById('photoData');
+    const feedbackForm = document.getElementById('feedbackForm');
+    const canvas = document.createElement('canvas');
+
+    // Request fixed-size camera stream to match container
+    navigator.mediaDevices.getUserMedia({
+      video: { width: 400, height: 300 }
+    })
+    .then(s => {
+      stream = s;
+      video.srcObject = s;
+    })
+    .catch(error => {
+      console.error('Error accessing camera:', error);
+    });
+
+    // Capture photo
+    captureBtn.addEventListener('click', () => {
+      if (!stream) return;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const imageData = canvas.toDataURL('image/png');
+      // Stop the camera to freeze
+      stream.getTracks().forEach(track => track.stop());
+      video.style.display = 'none';
+      capturedImage.src = imageData;
+      capturedImage.style.display = 'block';
+      photoData.value = imageData;
+    });
+
+    // Prevent default form submission
+    feedbackForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      if (!photoData.value) {
+        alert('Please capture a photo before submitting.');
+        return;
+      }
+      if (feedbackForm.checkValidity()) {
+        alert('Form is valid and ready for further processing!');
+      } else {
+        feedbackForm.reportValidity();
+      }
+    });
+  </script>
+</body>
+</html>
